@@ -1,0 +1,49 @@
+import numpy as np
+from keras. layers import Input, Dense
+from keras.models import Model
+from keras.datasets import mnist
+import matplotlib.pyplot as plt
+def plot_autoencoder_outputs(autoencoder,n,dims):
+    decoded_imgs = autoencoder. predict(x_test)
+    n = 5 # number of example digits to show
+    plt.figure(figsize=(10, 4.5))
+    for i in range(n):
+        # plot original image
+        ax = plt.subplot(2, n, i + 1)
+        plt.imshow(x_test[i].reshape(*dims))
+        plt.gray()
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+        if i==n/2:
+          ax.set_title('Original Images')
+        # plot reconstruction
+        ax = plt.subplot(2, n, i + 1 + n)
+        plt.imshow(decoded_imgs [i].reshape(*dims))
+        plt.gray()
+        ax.get_xaxis().set_visible (False)
+        ax.get_yaxis().set_visible(False)
+        if i==n/2:
+            ax.set_title('Reconstructed Images')
+    plt.show()
+#Preparing the input data (MNIST Dataset)
+(x_train,_), (x_test,_)=mnist.load_data("mnist.npz")
+#normalize all values between 0 and 1
+x_train= x_train.astype('float32') / 255.
+x_test = x_test.astype('float32') / 255.
+#we will flatten the 28x28 images into vectors of size 784.
+x_train = x_train.reshape((len(x_train), np.prod(x_train. shape [1:])))
+x_test = x_test.reshape((len(x_test), np.prod(x_test.shape[1:])))
+print(x_train.shape)
+print(x_test.shape)
+input_size = 784 # compression of factor 24.5, assuming the input is 784 floats
+encoding_dim= 32 #this is the size of our encoded representations
+input_img=Input(shape=(input_size,))
+# "encoded" is the encoded representation of the input
+encoded= Dense(encoding_dim, activation='relu') (input_img)
+# "decoded" is the lossy reconstruction of the input
+decoded = Dense(input_size, activation="sigmoid") (encoded)
+autoencoder=Model(input_img, decoded)
+autoencoder.compile(optimizer='adam',loss='binary_crossentropy')
+autoencoder.fit(x_train,x_train,epochs=5)
+plot_autoencoder_outputs(autoencoder,5,(28,28))
+

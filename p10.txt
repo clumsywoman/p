@@ -1,0 +1,65 @@
+!wget https://github.com/AlexeyAB/darknet/blob/master/cfg/yolov3.cfg?raw=true -O yolov3.cfg
+!wget https://pjreddie.com/media/files/yolov3.weights
+
+import cv2
+import numpy as np
+import urllib.request
+import matplotlib.pyplot as plt
+import tensorflow as tf
+
+# Download the COCO dataset labels
+url = 'https://raw.githubusercontent.com/pjreddie/darknet/master/data/coco.names'
+urllib.request.urlretrieve(url, 'coco.names')
+
+# Load the pre-trained model
+model = tf.keras.applications.EfficientNetB0(include_top=False, weights='imagenet')
+model.trainable = False
+
+# Load the object detection model
+obj_detector = cv2.dnn.readNetFromDarknet('yolov3.cfg', 'yolov3.weights')
+obj_detector.setPreferableBackend(cv2.dnn.DNN_BACKEND_OPENCV)
+obj_detector.setPreferableTarget(cv2.dnn.DNN_TARGET_CPU)
+
+# Define the function for object detection
+def detect_objects(image):
+    # Convert the image to a blob
+    blob = cv2.dnn.blobFromImage(image, 1/255, (416, 416), swapRB=True, crop=False)
+
+    # Pass the blob through the object detection model
+    obj_detector.setInput(blob)
+    detections = obj_detector.forward()
+
+    # Loop through the detections and draw boxes around the objects
+    for detection in detections:
+        scores = detection[5:]
+        class_id = np.argmax(scores)
+        confidence = scores[class_id]
+
+        if confidence > 0.5:
+            center_x = int(detection[0] * image.shape[1])
+            center_y = int(detection[1] * image.shape[0])
+            width = int(detection[2] * image.shape[1])
+            height = int(detection[3] * image.shape[0])
+            left = int(center_x - width/2)
+            top = int(center_y - height/2)
+
+            cv2.rectangle(image, (left, top), (left+width, top+height), (0, 255, 0), 2)
+            cv2.putText(image, f'{class_id}', (left, top-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+
+    return image
+
+
+
+# Download an example image for testing
+url = 'https://images.unsplash.com/photo-1594028411108-96a5b0302a4a?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80'
+urllib.request.urlretrieve(url, 'example.jpg')
+
+# Load the example image and perform object detection
+image = cv2.imread('example.jpg')
+image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+image = detect_objects(image)
+
+# Display the result
+plt.imshow(image)
+plt.axis('off')
+plt.show()

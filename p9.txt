@@ -1,0 +1,34 @@
+# Install required libraries
+!pip install tensorflow-gpu==2.7.0
+!pip install keras==2.4.3
+!pip install opencv-python-headless==4.5.4.58
+!pip install numpy==1.19.5
+!pip install pillow==8.3.2
+!pip install matplotlib==3.2.2
+!pip install imageai==2.1.6
+
+# Download the RetinaNet model
+!wget https://github.com/fizyr/keras-retinanet/releases/download/0.5.1/resnet50_coco_best_v2.1.0.h5
+
+# Import necessary libraries
+import os
+import urllib.request
+from imageai.Detection import ObjectDetection
+import matplotlib.pyplot as plt
+from PIL import Image
+
+# Set input and output paths
+input_url = "https://images.unsplash.com/photo-1594028411108-96a5b0302a4a?ixlib=rb4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80"
+input_path = os.path.join(os.getcwd(), "input_image.jpg")
+output_path = os.path.join(os.getcwd(), "output_image.jpg")
+
+# Download input image from URL and save it
+urllib.request.urlretrieve(input_url, input_path)
+
+# Detect objects in input image
+detections = detector.detectObjectsFromImage(input_image=input_path, output_image_path=output_path)
+
+# Print detected objects and their probabilities
+for detection in detections:
+ print(detection["name"], " : ", detection["percentage_probability"])
+
